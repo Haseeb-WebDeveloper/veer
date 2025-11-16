@@ -1,0 +1,644 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// USERS & AUTHENTICATION
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  profile          Profile?
+  businessSettings BusinessSettings?
+  calls            Call[]
+  appointments     Appointment[]
+  forms            Form[]
+  formSubmissions  FormSubmission[]
+  aiPrompts        AIPrompt[]
+  notifications    Notification[]
+  subscription     Subscription?
+  emailUsage       EmailUsage[]
+
+  @@map("users")
+}
+
+model Profile {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  businessName String   @map("business_name")
+  industry     String? // 'hvac', 'plumbing', 'dental', 'legal', 'salon', etc.
+  phone        String?
+  email        String?
+  country      String   @default("US")
+  timezone     String   @default("America/New_York")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ============================================
+// BUSINESS SETTINGS
+// ============================================
+
+model BusinessSettings {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+
+  // Phone settings
+  twilioPhoneNumber String? @map("twilio_phone_number")
+  forwardToNumber   String? @map("forward_to_number")
+
+  // AI Voice settings
+  voiceId          String  @default("default") @map("voice_id")
+  voiceLanguage    String  @default("en-US") @map("voice_language")
+  greetingMessage  String  @default("Thank you for calling. How can I help you today?") @map("greeting_message")
+  afterHoursMessage String @default("We are currently closed. Please leave your information and we will call you back.") @map("after_hours_message")
+
+  // Business hours (stored as JSON)
+  businessHours Json @default("{\"monday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"tuesday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"wednesday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"thursday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"friday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"saturday\": {\"open\": \"10:00\", \"close\": \"14:00\"}, \"sunday\": {\"closed\": true}}") @map("business_hours")
+
+  // Calendar integration
+  calendarConnected     Boolean  @default(false) @map("calendar_connected")
+  googleCalendarId      String?  @map("google_calendar_id")
+  calendarRefreshToken  String?  @map("calendar_refresh_token") // ENCRYPTED
+  calendarConnectedAt   DateTime? @map("calendar_connected_at")
+
+  // Email integration
+  emailConnected    Boolean  @default(false) @map("email_connected")
+  emailProvider     String?  @map("email_provider") // 'gmail', 'outlook', 'smtp'
+  emailAddress      String?  @map("email_address")
+  emailOauthToken   String?  @map("email_oauth_token") // ENCRYPTED
+  emailConnectedAt  DateTime? @map("email_connected_at")
+
+  // SMTP (if using custom email)
+  smtpHost     String? @map("smtp_host")
+  smtpPort     Int?    @map("smtp_port")
+  smtpUser     String? @map("smtp_user")
+  smtpPassword String? @map("smtp_password") // ENCRYPTED
+
+  // Notifications
+  smsNotifications   Boolean @default(true) @map("sms_notifications")
+  emailNotifications Boolean @default(true) @map("email_notifications")
+  notificationPhone  String? @map("notification_phone")
+  notificationEmail  String? @map("notification_email")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("business_settings")
+}
+
+// ============================================
+// VOICE AGENT - CALLS
+// ============================================
+
+model Call {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  twilioCallSid String   @unique @map("twilio_call_sid")
+  fromNumber    String   @map("from_number")
+  toNumber      String   @map("to_number")
+
+  // Status
+  status    CallStatus @default(IN_PROGRESS)
+  direction String     @default("inbound") // 'inbound', 'outbound'
+
+  // Timing
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationSeconds Int       @default(0) @map("duration_seconds")
+
+  // Content
+  transcript Json    @default("[]") // [{role: 'user', text: '...'}, {role: 'assistant', text: '...'}]
+  summary    String? // AI-generated summary
+  callType   String? @map("call_type") // 'appointment', 'quote', 'emergency', 'information', 'other'
+
+  // Lead capture
+  customerName    String? @map("customer_name")
+  customerPhone   String? @map("customer_phone")
+  customerEmail   String? @map("customer_email")
+  customerAddress String? @map("customer_address")
+  serviceRequested String? @map("service_requested")
+  urgency         Urgency @default(NORMAL)
+  notes           String?
+
+  // Recording
+  recordingUrl      String? @map("recording_url")
+  recordingDuration Int?    @map("recording_duration")
+
+  // Appointment
+  appointmentId String? @map("appointment_id")
+
+  // Metrics
+  sentiment     String?  @map("sentiment") // 'positive', 'neutral', 'negative'
+  wasTransferred Boolean @default(false) @map("was_transferred")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointment  Appointment?  @relation(fields: [appointmentId], references: [id])
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([customerPhone])
+  @@map("calls")
+}
+
+enum CallStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  NO_ANSWER
+  BUSY
+  CANCELLED
+}
+
+enum Urgency {
+  EMERGENCY
+  URGENT
+  NORMAL
+  LOW
+}
+
+// ============================================
+// APPOINTMENTS
+// ============================================
+
+model Appointment {
+  id       String  @id @default(uuid())
+  userId   String  @map("user_id")
+  callId   String? @map("call_id")
+  formSubmissionId String? @map("form_submission_id")
+
+  // Customer details
+  customerName    String  @map("customer_name")
+  customerPhone   String  @map("customer_phone")
+  customerEmail   String? @map("customer_email")
+  customerAddress String? @map("customer_address")
+
+  serviceType String? @map("service_type")
+
+  // Timing
+  scheduledAt     DateTime @map("scheduled_at")
+  durationMinutes Int      @default(60) @map("duration_minutes")
+
+  // Status
+  status AppointmentStatus @default(SCHEDULED)
+
+  // Notes
+  notes         String? // Customer-facing notes
+  internalNotes String? @map("internal_notes") // Staff notes
+
+  // Google Calendar
+  googleEventId String? @map("google_event_id")
+
+  // Reminders
+  reminderSent   Boolean   @default(false) @map("reminder_sent")
+  reminderSentAt DateTime? @map("reminder_sent_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calls          Call[]
+  formSubmission FormSubmission? @relation(fields: [formSubmissionId], references: [id])
+
+  @@index([userId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([customerPhone])
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+// ============================================
+// AI PROMPTS (Industry-specific scripts)
+// ============================================
+
+model AIPrompt {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  name     String // 'Main Greeting', 'After Hours', 'Emergency Handler'
+  promptType String @map("prompt_type") // 'system', 'greeting', 'emergency', 'booking'
+  promptText String @map("prompt_text") @db.Text
+
+  // Settings
+  isActive      Boolean @default(true) @map("is_active")
+  orderPriority Int     @default(0) @map("order_priority")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_prompts")
+}
+
+// ============================================
+// FORMS & SUBMISSIONS
+// ============================================
+
+model Form {
+  id          String  @id @default(uuid())
+  userId      String  @map("user_id")
+  name        String // Internal name
+  title       String? // Display title
+  description String?
+
+  // Fields configuration (array of field objects)
+  fields Json // [{ type, name, label, required, placeholder, options }]
+
+  // Styling
+  theme Json @default("{\"primaryColor\": \"#3B82F6\", \"submitText\": \"Submit\"}") // { primaryColor, submitText, etc. }
+
+  // Settings
+  isActive       Boolean @default(true) @map("is_active")
+  redirectUrl    String? @map("redirect_url")
+  successMessage String  @default("Thank you! We will be in touch soon.") @map("success_message")
+
+  // Embed code (auto-generated)
+  embedCode String? @map("embed_code")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions      FormSubmission[]
+  automations      FormAutomation[]
+
+  @@index([userId])
+  @@map("forms")
+}
+
+model FormSubmission {
+  id     String @id @default(uuid())
+  formId String @map("form_id")
+  userId String @map("user_id")
+
+  // Submitted data
+  data Json // { name: "John", email: "...", phone: "...", ... }
+
+  // Metadata
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+  referrer  String?
+
+  // Status
+  status SubmissionStatus @default(NEW)
+
+  // Tags
+  tags String[] @default([])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  form              Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  automationLogs    AutomationLog[]
+  appointments      Appointment[]
+
+  @@index([formId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+  @@map("form_submissions")
+}
+
+enum SubmissionStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+  SPAM
+}
+
+// ============================================
+// FORM AUTOMATIONS
+// ============================================
+
+model FormAutomation {
+  id     String @id @default(uuid())
+  formId String @map("form_id")
+
+  // Trigger
+  triggerEvent String @default("on_submit") @map("trigger_event") // 'on_submit', 'on_status_change'
+
+  // Actions (ordered array)
+  actions Json // [{ type: 'email', config: {...}, delay: 0 }]
+
+  // Settings
+  isActive     Boolean @default(true) @map("is_active")
+  delaySeconds Int     @default(0) @map("delay_seconds")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@map("form_automations")
+}
+
+model AutomationLog {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  actionType   String   @map("action_type") // 'email', 'sms', 'webhook'
+  status       LogStatus
+  errorMessage String?  @map("error_message")
+  metadata     Json?    @default("{}") // Additional data about execution
+  executedAt   DateTime @default(now()) @map("executed_at")
+
+  // Relations
+  submission FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@index([executedAt])
+  @@map("automation_logs")
+}
+
+enum LogStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  SKIPPED
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id     String  @id @default(uuid())
+  userId String  @map("user_id")
+  callId String? @map("call_id")
+
+  // Notification details
+  type      NotificationType
+  recipient String
+  subject   String?
+  message   String            @db.Text
+  status    NotificationStatus @default(PENDING)
+
+  // Timing
+  sentAt   DateTime? @map("sent_at")
+  errorMessage String? @map("error_message")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  call Call? @relation(fields: [callId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  SMS
+  EMAIL
+  PUSH
+  WEBHOOK
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  DELIVERED
+  BOUNCED
+}
+
+// ============================================
+// SUBSCRIPTION & BILLING
+// ============================================
+
+model Subscription {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+
+  // Stripe details
+  stripeCustomerId     String? @unique @map("stripe_customer_id")
+  stripeSubscriptionId String? @unique @map("stripe_subscription_id")
+
+  // Plan details
+  planType     PlanType @default(STARTER) @map("plan_type")
+  priceAmount  Int? // in cents
+  currency     String   @default("usd")
+
+  // Status
+  status              SubscriptionStatus @default(ACTIVE)
+  trialEndsAt         DateTime?          @map("trial_ends_at")
+  currentPeriodStart  DateTime?          @map("current_period_start")
+  currentPeriodEnd    DateTime?          @map("current_period_end")
+  cancelAt            DateTime?          @map("cancel_at")
+  canceledAt          DateTime?          @map("canceled_at")
+
+  // Usage tracking
+  callsThisPeriod Int @default(0) @map("calls_this_period")
+  callsLimit      Int @default(500) @map("calls_limit")
+  formsThisPeriod Int @default(0) @map("forms_this_period")
+  formsLimit      Int @default(100) @map("forms_limit")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+enum PlanType {
+  STARTER   // $197/mo - Voice or Forms
+  PROFESSIONAL // $347/mo - Voice + Forms + Calendar
+  ENTERPRISE   // $597/mo - Everything + Custom
+  TRIAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  UNPAID
+}
+
+// ============================================
+// EMAIL USAGE TRACKING
+// ============================================
+
+model EmailUsage {
+  id     String   @id @default(uuid())
+  userId String   @map("user_id")
+  date   DateTime @unique @db.Date
+  count  Int      @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("email_usage")
+}
+
+// ============================================
+// EMAIL DELIVERY LOGS
+// ============================================
+
+model EmailDeliveryLog {
+  id     String   @id @default(uuid())
+  userId String   @map("user_id")
+  method String   // 'brevo', 'gmail_oauth', 'smtp', 'outlook_oauth'
+  status LogStatus
+  errorMessage String? @map("error_message")
+  recipient    String
+  subject      String?
+  metadata     Json?   @default("{}")
+
+  sentAt DateTime @default(now()) @map("sent_at")
+
+  @@index([userId])
+  @@index([sentAt])
+  @@index([status])
+  @@map("email_delivery_logs")
+}
+
+// ============================================
+// ANALYTICS & TRACKING
+// ============================================
+
+model EmailAnalytics {
+  id           String   @id @default(uuid())
+  submissionId String?  @map("submission_id")
+  userId       String   @map("user_id")
+  eventType    EmailEvent @map("event_type")
+  email        String
+  messageId    String?  @map("message_id")
+  metadata     Json?    @default("{}")
+
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([submissionId])
+  @@index([timestamp])
+  @@map("email_analytics")
+}
+
+enum EmailEvent {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+}
+
+// ============================================
+// WEBHOOK ENDPOINTS (for integrations)
+// ============================================
+
+model WebhookEndpoint {
+  id          String  @id @default(uuid())
+  userId      String  @map("user_id")
+  name        String
+  url         String
+  secret      String? // For signature verification
+  events      String[] // ['form.submitted', 'call.ended', 'appointment.booked']
+  isActive    Boolean @default(true) @map("is_active")
+  description String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  webhookLogs WebhookLog[]
+
+  @@index([userId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookLog {
+  id         String     @id @default(uuid())
+  endpointId String     @map("endpoint_id")
+  event      String
+  payload    Json
+  status     LogStatus
+  statusCode Int?       @map("status_code")
+  errorMessage String?  @map("error_message")
+  attemptCount Int      @default(1) @map("attempt_count")
+
+  sentAt DateTime @default(now()) @map("sent_at")
+
+  // Relations
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([sentAt])
+  @@map("webhook_logs")
+}
+
+// ============================================
+// API KEYS (for external integrations)
+// ============================================
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  keyHash     String   @unique @map("key_hash") // Hashed API key
+  keyPrefix   String   @map("key_prefix") // First 8 chars for display
+  permissions String[] @default(["read"]) // ['read', 'write', 'admin']
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("api_keys")
+}

@@ -1,8 +1,155 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "lenis/dist/lenis.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:is(.dark *));
+
+/* Aileron Font Family */
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Thin.otf") format("opentype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-ThinItalic.otf") format("opentype");
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-UltraLight.otf") format("opentype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-UltraLightItalic.otf") format("opentype");
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-LightItalic.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-SemiBold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-SemiBoldItalic.otf") format("opentype");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Heavy.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-HeavyItalic.otf") format("opentype");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/aileron/Aileron-BlackItalic.otf") format("opentype");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Brimful Font Family */
+@font-face {
+  font-family: "Brimful";
+  src: url("/fonts/brimful/Brimful-Regular.otf") format("opentype"),
+    url("/fonts/brimful/Brimful-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Brimful";
+  src: url("/fonts/brimful/Brimful-Italic.otf") format("opentype"),
+    url("/fonts/brimful/Brimful-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
 }
 
 @theme inline {
@@ -10,17 +157,185 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-family-aileron: "Aileron", sans-serif;
+  --font-family-brimful: "Brimful", serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.625rem;
+  /* Brand Colors */
+  --brand-primary: #0d3b66; /* Dark blue */
+  --brand-accent: #9381ff; /* Purple */
+  --brand-light: #f3fcf0; /* Light cream */
+  --brand-dark: #03000a; /* Very dark blue/black */
+
+  /* Light mode colors */
+  --background: oklch(0.98 0.01 140); /* #F3FCF0 - brand light */
+  --foreground: oklch(0.05 0.02 260); /* #03000A - brand dark */
+  --card: oklch(1 0 0); /* White */
+  --card-foreground: oklch(0.05 0.02 260); /* #03000A */
+  --popover: oklch(1 0 0); /* White */
+  --popover-foreground: oklch(0.05 0.02 260); /* #03000A */
+  --primary: oklch(0.35 0.08 240); /* #0D3B66 - brand primary */
+  --primary-foreground: oklch(0.98 0.01 140); /* #F3FCF0 - brand light */
+  --secondary: oklch(0.92 0.01 140); /* Slightly darker than background */
+  --secondary-foreground: oklch(0.35 0.08 240); /* #0D3B66 */
+  --muted: oklch(0.92 0.01 140);
+  --muted-foreground: oklch(0.45 0.02 260);
+  --accent: oklch(0.65 0.15 280); /* #9381FF - brand accent */
+  --accent-foreground: oklch(0.98 0.01 140); /* #F3FCF0 */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0.01 140);
+  --border: oklch(0.88 0.01 140);
+  --input: oklch(0.92 0.01 140);
+  --ring: oklch(0.35 0.08 240); /* Primary color for focus rings */
+  --chart-1: oklch(0.35 0.08 240); /* Primary */
+  --chart-2: oklch(0.65 0.15 280); /* Accent */
+  --chart-3: oklch(0.45 0.06 200);
+  --chart-4: oklch(0.55 0.12 160);
+  --chart-5: oklch(0.5 0.1 120);
+  --sidebar: oklch(0.98 0.01 140);
+  --sidebar-foreground: oklch(0.05 0.02 260);
+  --sidebar-primary: oklch(0.35 0.08 240);
+  --sidebar-primary-foreground: oklch(0.98 0.01 140);
+  --sidebar-accent: oklch(0.65 0.15 280);
+  --sidebar-accent-foreground: oklch(0.98 0.01 140);
+  --sidebar-border: oklch(0.88 0.01 140);
+  --sidebar-ring: oklch(0.35 0.08 240);
+}
+
+.dark {
+  /* Dark mode colors */
+  --background: oklch(0.05 0.02 260); /* #03000A - brand dark */
+  --foreground: oklch(0.98 0.01 140); /* #F3FCF0 - brand light */
+  --card: oklch(0.08 0.02 260); /* Slightly lighter than background */
+  --card-foreground: oklch(0.98 0.01 140);
+  --popover: oklch(0.08 0.02 260);
+  --popover-foreground: oklch(0.98 0.01 140);
+  --primary: oklch(
+    0.65 0.15 280
+  ); /* #9381FF - brand accent (lighter for dark mode) */
+  --primary-foreground: oklch(0.05 0.02 260); /* #03000A */
+  --secondary: oklch(0.12 0.02 260);
+  --secondary-foreground: oklch(0.98 0.01 140);
+  --muted: oklch(0.12 0.02 260);
+  --muted-foreground: oklch(0.65 0.02 280);
+  --accent: oklch(0.65 0.15 280); /* #9381FF - brand accent */
+  --accent-foreground: oklch(0.05 0.02 260);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.98 0.01 140);
+  --border: oklch(0.15 0.02 260);
+  --input: oklch(0.12 0.02 260);
+  --ring: oklch(0.65 0.15 280); /* Accent color for focus rings */
+  --chart-1: oklch(0.65 0.15 280); /* Accent */
+  --chart-2: oklch(0.35 0.08 240); /* Primary */
+  --chart-3: oklch(0.55 0.12 200);
+  --chart-4: oklch(0.6 0.1 160);
+  --chart-5: oklch(0.5 0.08 120);
+  --sidebar: oklch(0.08 0.02 260);
+  --sidebar-foreground: oklch(0.98 0.01 140);
+  --sidebar-primary: oklch(0.65 0.15 280);
+  --sidebar-primary-foreground: oklch(0.05 0.02 260);
+  --sidebar-accent: oklch(0.12 0.02 260);
+  --sidebar-accent-foreground: oklch(0.98 0.01 140);
+  --sidebar-border: oklch(0.15 0.02 260);
+  --sidebar-ring: oklch(0.65 0.15 280);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Lenis smooth scroll styles */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+  
+  .lenis.lenis-scrolling iframe {
+    pointer-events: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .font-aileron {
+    font-family: var(--font-family-aileron);
+  }
+
+  .font-brimful {
+    font-family: var(--font-family-brimful);
+  }
+}
+
+.main-section {
+  max-width: 1600px;
+  margin: auto auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 640px) {
+  .main-section {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-section {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
 }
