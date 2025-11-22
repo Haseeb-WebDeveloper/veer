@@ -21,11 +21,15 @@ export async function signUp(formData: FormData) {
     return { error: 'Password must be at least 8 characters' }
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const redirectTo = `${baseUrl}/auth/callback?next=/dashboard`
+
   // Sign up with Supabase
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: redirectTo,
       data: {
         name,
       },
@@ -45,8 +49,16 @@ export async function signUp(formData: FormData) {
       // Continue even if sync fails - user is created in Supabase
     }
 
+    // Check if email confirmation is required
+    // If user is not confirmed, show success message instead of redirecting
+    if (!data.user.email_confirmed_at) {
+      revalidatePath('/', 'layout')
+      return { success: true, message: 'We have sent you an email please verify.' }
+    }
+
+    // If email is already confirmed (shouldn't happen in normal flow), redirect to dashboard
     revalidatePath('/', 'layout')
-    redirect('/')
+    redirect('/dashboard')
   }
 
   return { error: 'Failed to create account' }

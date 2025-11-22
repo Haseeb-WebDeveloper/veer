@@ -91,7 +91,7 @@
 
 ```bash
 # Using create-next-app (recommended)
-bun create-next-app@latest my-app
+pnpm create-next-app@latest my-app
 
 # Options to select:
 # ✅ TypeScript: Yes
@@ -3334,4 +3334,4 @@ This guide covers everything you need to build lightning-fast, optimized, and se
 8. **Security First** - Validate inputs, sanitize data, prevent XSS/SQL injection
 9. **Optimize Performance** - Prefetch, cache, lazy load, optimize images
 10. **Generic Database Patterns** - Write code that works with any database
-11. Use bun as package manager
+11. Use pnpm as package manager

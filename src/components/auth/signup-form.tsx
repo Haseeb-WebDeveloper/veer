@@ -11,14 +11,18 @@ import Link from 'next/link'
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const handleSubmit = async (formData: FormData) => {
     setError(null)
+    setSuccess(null)
     startTransition(async () => {
       const result = await signUp(formData)
       if (result?.error) {
         setError(result.error)
+      } else if (result?.success && result?.message) {
+        setSuccess(result.message)
       }
     })
   }
@@ -42,6 +46,11 @@ export function SignupForm() {
           {error}
         </div>
       )}
+      {success && (
+        <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 text-sm text-green-800 dark:text-green-200">
+          {success}
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
@@ -54,6 +63,7 @@ export function SignupForm() {
             placeholder="Enter your name"
             className="pl-10"
             required
+            disabled={!!success}
           />
         </div>
       </div>
@@ -71,6 +81,7 @@ export function SignupForm() {
             placeholder="Enter your email"
             className="pl-10"
             required
+            disabled={!!success}
           />
         </div>
       </div>
@@ -89,6 +100,7 @@ export function SignupForm() {
             className="pl-10"
             required
             minLength={8}
+            disabled={!!success}
           />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -96,7 +108,7 @@ export function SignupForm() {
         </p>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button type="submit" className="w-full" disabled={isPending || !!success}>
         {isPending ? 'Creating account...' : 'Sign Up'}
       </Button>
 
@@ -117,7 +129,7 @@ export function SignupForm() {
           variant="outline"
           className="w-full"
           onClick={() => handleOAuth('google')}
-          disabled={isPending}
+          disabled={isPending || !!success}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -144,7 +156,7 @@ export function SignupForm() {
           variant="outline"
           className="w-full"
           onClick={() => handleOAuth('apple')}
-          disabled={isPending}
+          disabled={isPending || !!success}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.16c-.15-2.23 1.66-4.07 3.74-4.25.42 2.54-1.38 5.25-3.74 4.25z" />

@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -21,14 +19,18 @@ model User {
   // Relations
   profile          Profile?
   businessSettings BusinessSettings?
+  integrations    Integration[]
   calls            Call[]
   appointments     Appointment[]
   forms            Form[]
   formSubmissions  FormSubmission[]
+  formAttachments  FormAttachment[]
+  automationJobs   AutomationJob[]
   aiPrompts        AIPrompt[]
   notifications    Notification[]
   subscription     Subscription?
   emailUsage       EmailUsage[]
+  submissionNotes  SubmissionNote[]
 
   @@map("users")
 }
@@ -37,6 +39,7 @@ model Profile {
   id           String   @id @default(uuid())
   userId       String   @unique @map("user_id")
   businessName String   @map("business_name")
+  logoUrl      String?  @map("logo_url")
   industry     String? // 'hvac', 'plumbing', 'dental', 'legal', 'salon', etc.
   phone        String?
   email        String?
@@ -52,6 +55,65 @@ model Profile {
 }
 
 // ============================================
+// INTEGRATIONS
+// ============================================
+
+model Integration {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  type   IntegrationType
+  status IntegrationStatus @default(INACTIVE)
+
+  // Provider (for email: GMAIL, OUTLOOK, CUSTOM; for calendar: GOOGLE; for Twilio: TWILIO)
+  provider String // Required - EmailProvider for EMAIL type, 'GOOGLE' for CALENDAR, 'TWILIO' for TWILIO
+
+  // Common fields
+  connectedAt   DateTime? @map("connected_at")
+  lastSyncAt    DateTime? @map("last_sync_at")
+  errorMessage  String?   @map("error_message") @db.Text
+
+  // Email-specific fields (when type = EMAIL)
+  emailAddress          String?  @map("email_address")
+  emailOauthToken       String?  @map("email_oauth_token") // ENCRYPTED
+  emailOauthRefreshToken String? @map("email_oauth_refresh_token") // ENCRYPTED
+  emailOauthTokenExpiresAt DateTime? @map("email_oauth_token_expires_at")
+  
+  // SMTP fields (when type = EMAIL and provider = CUSTOM)
+  smtpHost     String? @map("smtp_host")
+  smtpPort     Int?    @map("smtp_port")
+  smtpUser     String? @map("smtp_user")
+  smtpPassword String? @map("smtp_password") // ENCRYPTED
+  smtpFromEmail String? @map("smtp_from_email") // The actual "From" email address for sent emails
+
+  // Calendar-specific fields (when type = CALENDAR)
+  googleCalendarId      String?  @map("google_calendar_id")
+  calendarAccessToken   String?  @map("calendar_access_token") // ENCRYPTED
+  calendarRefreshToken  String?  @map("calendar_refresh_token") // ENCRYPTED
+  calendarTokenExpiresAt DateTime? @map("calendar_token_expires_at")
+
+  // Twilio-specific fields (when type = TWILIO)
+  twilioAccountSid   String?  @map("twilio_account_sid")
+  twilioAuthToken    String?  @map("twilio_auth_token") // ENCRYPTED
+  twilioPhoneNumber  String?  @map("twilio_phone_number")
+
+  // Provider-specific config (JSON for flexibility)
+  config Json? @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, provider]) // Allow multiple providers per type (e.g., Gmail + Custom SMTP)
+  @@index([userId])
+  @@index([userId, type])
+  @@index([userId, type, status]) // For finding active integrations
+  @@index([status])
+  @@map("integrations")
+}
+
+// ============================================
 // BUSINESS SETTINGS
 // ============================================
 
@@ -60,7 +122,6 @@ model BusinessSettings {
   userId String @unique @map("user_id")
 
   // Phone settings
-  twilioPhoneNumber String? @map("twilio_phone_number")
   forwardToNumber   String? @map("forward_to_number")
 
   // AI Voice settings
@@ -72,30 +133,17 @@ model BusinessSettings {
   // Business hours (stored as JSON)
   businessHours Json @default("{\"monday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"tuesday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"wednesday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"thursday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"friday\": {\"open\": \"09:00\", \"close\": \"17:00\"}, \"saturday\": {\"open\": \"10:00\", \"close\": \"14:00\"}, \"sunday\": {\"closed\": true}}") @map("business_hours")
 
-  // Calendar integration
-  calendarConnected     Boolean  @default(false) @map("calendar_connected")
-  googleCalendarId      String?  @map("google_calendar_id")
-  calendarRefreshToken  String?  @map("calendar_refresh_token") // ENCRYPTED
-  calendarConnectedAt   DateTime? @map("calendar_connected_at")
-
-  // Email integration
-  emailConnected    Boolean  @default(false) @map("email_connected")
-  emailProvider     String?  @map("email_provider") // 'gmail', 'outlook', 'smtp'
-  emailAddress      String?  @map("email_address")
-  emailOauthToken   String?  @map("email_oauth_token") // ENCRYPTED
-  emailConnectedAt  DateTime? @map("email_connected_at")
-
-  // SMTP (if using custom email)
-  smtpHost     String? @map("smtp_host")
-  smtpPort     Int?    @map("smtp_port")
-  smtpUser     String? @map("smtp_user")
-  smtpPassword String? @map("smtp_password") // ENCRYPTED
-
   // Notifications
   smsNotifications   Boolean @default(true) @map("sms_notifications")
   emailNotifications Boolean @default(true) @map("email_notifications")
   notificationPhone  String? @map("notification_phone")
   notificationEmail  String? @map("notification_email")
+
+  // Automation defaults
+  defaultAutomationEmailTemplate String? @map("default_automation_email_template") @db.Text
+  defaultAutomationSmsTemplate   String? @map("default_automation_sms_template")
+  autoFollowUpEnabled             Boolean @default(true) @map("auto_follow_up_enabled")
+  followUpDelayHours              Int     @default(24) @map("follow_up_delay_hours")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -289,8 +337,13 @@ model Form {
   redirectUrl    String? @map("redirect_url")
   successMessage String  @default("Thank you! We will be in touch soon.") @map("success_message")
 
+  // File upload settings
+  allowFileUploads Boolean @default(false) @map("allow_file_uploads")
+  maxFileSize      Int?    @default(5242880) @map("max_file_size") // 5MB in bytes
+  allowedFileTypes String[] @default([]) @map("allowed_file_types") // ['image/jpeg', 'application/pdf']
+
   // Embed code (auto-generated)
-  embedCode String? @map("embed_code")
+  embedCode String? @unique @map("embed_code")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -301,6 +354,7 @@ model Form {
   automations      FormAutomation[]
 
   @@index([userId])
+  @@index([embedCode]) // For public form lookups
   @@map("forms")
 }
 
@@ -316,9 +370,15 @@ model FormSubmission {
   ipAddress String? @map("ip_address")
   userAgent String? @map("user_agent")
   referrer  String?
+  source    FormSubmissionSource? @map("source")
 
   // Status
   status SubmissionStatus @default(NEW)
+
+  // Lead scoring & tracking
+  leadScore    Int      @default(0) @map("lead_score")
+  contactedAt  DateTime? @map("contacted_at")
+  convertedAt  DateTime? @map("converted_at")
 
   // Tags
   tags String[] @default([])
@@ -329,13 +389,18 @@ model FormSubmission {
   // Relations
   form              Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments       FormAttachment[]
   automationLogs    AutomationLog[]
+  automationJobs    AutomationJob[]
   appointments      Appointment[]
+  submissionNotes   SubmissionNote[]
 
   @@index([formId])
   @@index([userId])
   @@index([createdAt])
   @@index([status])
+  @@index([userId, status]) // Composite for dashboard queries
+  @@index([userId, createdAt]) // Composite for recent submissions
   @@map("form_submissions")
 }
 
@@ -349,47 +414,199 @@ enum SubmissionStatus {
 }
 
 // ============================================
+// FORM ATTACHMENTS
+// ============================================
+
+model FormAttachment {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  userId       String   @map("user_id")
+  
+  // Cloudinary details
+  cloudinaryPublicId String   @map("cloudinary_public_id")
+  cloudinaryUrl      String   @map("cloudinary_url")
+  cloudinarySecureUrl String  @map("cloudinary_secure_url")
+  
+  // File metadata
+  fileName     String   @map("file_name")
+  fileType     String   @map("file_type") // MIME type
+  fileSize     Int      @map("file_size") // bytes
+  fieldName    String?  @map("field_name") // Which form field uploaded this
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  submission FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@index([userId])
+  @@map("form_attachments")
+}
+
+// ============================================
 // FORM AUTOMATIONS
 // ============================================
 
 model FormAutomation {
   id     String @id @default(uuid())
   formId String @map("form_id")
+  name   String? // User-friendly name
 
   // Trigger
-  triggerEvent String @default("on_submit") @map("trigger_event") // 'on_submit', 'on_status_change'
-
-  // Actions (ordered array)
-  actions Json // [{ type: 'email', config: {...}, delay: 0 }]
+  triggerEvent AutomationTrigger @default(ON_SUBMIT) @map("trigger_event")
+  triggerCondition Json? @map("trigger_condition") // { field: 'status', operator: 'equals', value: 'NEW' }
 
   // Settings
   isActive     Boolean @default(true) @map("is_active")
-  delaySeconds Int     @default(0) @map("delay_seconds")
+  stopOnError Boolean @default(false) @map("stop_on_error") // Stop if one action fails
+  runOnce      Boolean @default(false) @map("run_once") // Only run once per submission
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+  form    Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
+  actions AutomationAction[]
 
   @@index([formId])
+  @@index([formId, isActive]) // Composite for active automations
   @@map("form_automations")
 }
+
+// ============================================
+// AUTOMATION ACTIONS
+// ============================================
+
+model AutomationAction {
+  id           String @id @default(uuid())
+  automationId String @map("automation_id")
+  
+  // Action details
+  type         AutomationActionType
+  order        Int     @default(0) // Execution order
+  
+  // Configuration (type-specific)
+  config       Json    // { recipient, subject, message, template, etc. }
+  
+  // Delay settings
+  delayType    DelayType @default(NONE) @map("delay_type")
+  delayValue   Int?    @default(0) @map("delay_value")
+  delayCondition Json? @map("delay_condition") // { field: 'status', operator: 'not_equals', value: 'CONTACTED' }
+  
+  // Conditional execution
+  conditions   Json?   @default("[]") // [{ field, operator, value }]
+  
+  // Settings
+  isActive     Boolean @default(true) @map("is_active")
+  retryOnFailure Boolean @default(false) @map("retry_on_failure")
+  maxRetries   Int     @default(0) @map("max_retries")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  automation FormAutomation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  jobs       AutomationJob[]
+
+  @@index([automationId])
+  @@index([automationId, order]) // Composite for ordered execution
+  @@map("automation_actions")
+}
+
+enum AutomationActionType {
+  EMAIL_CUSTOMER
+  EMAIL_OWNER
+  SMS_CUSTOMER
+  SMS_OWNER
+  WEBHOOK
+  SCHEDULE_FOLLOWUP
+  UPDATE_STATUS
+  ADD_TAG
+  CREATE_APPOINTMENT
+}
+
+// ============================================
+// AUTOMATION JOBS (Queue System)
+// ============================================
+
+model AutomationJob {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  actionId     String   @map("action_id")
+  userId       String   @map("user_id")
+  
+  // Job status
+  status       JobStatus @default(PENDING)
+  priority     Int       @default(0) // Higher = execute first
+  
+  // Scheduling
+  scheduledFor DateTime  @map("scheduled_for") // When to execute
+  executedAt   DateTime? @map("executed_at")
+  
+  // Execution tracking
+  attemptCount Int       @default(0) @map("attempt_count")
+  maxAttempts  Int       @default(3) @map("max_attempts")
+  errorMessage String?   @map("error_message") @db.Text
+  
+  // Result data
+  result       Json?     // Response from action execution
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  submission FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  action     AutomationAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs       AutomationLog[]
+
+  @@index([status, scheduledFor]) // For job queue queries
+  @@index([submissionId])
+  @@index([actionId])
+  @@index([userId, status, scheduledFor]) // Composite for efficient queue processing
+  @@index([status, priority, scheduledFor]) // Composite for efficient queue processing
+  @@map("automation_jobs")
+}
+
+enum JobStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  RETRYING
+}
+
+// ============================================
+// AUTOMATION LOGS
+// ============================================
 
 model AutomationLog {
   id           String   @id @default(uuid())
   submissionId String   @map("submission_id")
-  actionType   String   @map("action_type") // 'email', 'sms', 'webhook'
+  jobId        String?  @map("job_id")
+  actionId     String?  @map("action_id")
+  
+  actionType   String   @map("action_type")
   status       LogStatus
-  errorMessage String?  @map("error_message")
-  metadata     Json?    @default("{}") // Additional data about execution
+  
+  // Execution details
+  errorMessage String?  @map("error_message") @db.Text
+  executionTime Int?    @map("execution_time") // milliseconds
+  metadata     Json?    @default("{}")
+  
   executedAt   DateTime @default(now()) @map("executed_at")
 
   // Relations
   submission FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  job        AutomationJob? @relation(fields: [jobId], references: [id], onDelete: SetNull)
 
   @@index([submissionId])
+  @@index([actionId])
   @@index([executedAt])
+  @@index([status, executedAt]) // For analytics
   @@map("automation_logs")
 }
 
@@ -398,6 +615,53 @@ enum LogStatus {
   FAILED
   PENDING
   SKIPPED
+}
+
+// ============================================
+// INTEGRATION ENUMS
+// ============================================
+
+enum EmailProvider {
+  GMAIL
+  OUTLOOK
+  CUSTOM
+}
+
+enum FormSubmissionSource {
+  WEBSITE
+  EMBED
+  API
+  IMPORT
+}
+
+enum AutomationTrigger {
+  ON_SUBMIT
+  ON_STATUS_CHANGE
+  ON_TAG_ADDED
+  ON_FIELD_CHANGE
+  SCHEDULED
+}
+
+enum DelayType {
+  NONE
+  SECONDS
+  MINUTES
+  HOURS
+  DAYS
+  CONDITION
+}
+
+enum IntegrationType {
+  EMAIL
+  CALENDAR
+  TWILIO
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  EXPIRED
 }
 
 // ============================================
@@ -446,7 +710,7 @@ enum NotificationStatus {
   DELIVERED
   BOUNCED
 }
-
+  
 // ============================================
 // SUBSCRIPTION & BILLING
 // ============================================
@@ -511,7 +775,7 @@ enum SubscriptionStatus {
 model EmailUsage {
   id     String   @id @default(uuid())
   userId String   @map("user_id")
-  date   DateTime @unique @db.Date
+  date   DateTime @db.Date
   count  Int      @default(0)
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -519,126 +783,32 @@ model EmailUsage {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, date]) // One record per user per date
   @@index([userId])
   @@index([date])
   @@map("email_usage")
 }
 
 // ============================================
-// EMAIL DELIVERY LOGS
+// SUBMISSION NOTES
 // ============================================
 
-model EmailDeliveryLog {
-  id     String   @id @default(uuid())
-  userId String   @map("user_id")
-  method String   // 'brevo', 'gmail_oauth', 'smtp', 'outlook_oauth'
-  status LogStatus
-  errorMessage String? @map("error_message")
-  recipient    String
-  subject      String?
-  metadata     Json?   @default("{}")
-
-  sentAt DateTime @default(now()) @map("sent_at")
-
-  @@index([userId])
-  @@index([sentAt])
-  @@index([status])
-  @@map("email_delivery_logs")
-}
-
-// ============================================
-// ANALYTICS & TRACKING
-// ============================================
-
-model EmailAnalytics {
+model SubmissionNote {
   id           String   @id @default(uuid())
-  submissionId String?  @map("submission_id")
+  submissionId String   @map("submission_id")
   userId       String   @map("user_id")
-  eventType    EmailEvent @map("event_type")
-  email        String
-  messageId    String?  @map("message_id")
-  metadata     Json?    @default("{}")
+  
+  note         String   @db.Text
+  isInternal   Boolean  @default(false) @map("is_internal") // Internal vs customer-facing
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  timestamp DateTime @default(now())
+  // Relations
+  submission FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
   @@index([submissionId])
-  @@index([timestamp])
-  @@map("email_analytics")
-}
-
-enum EmailEvent {
-  SENT
-  DELIVERED
-  OPENED
-  CLICKED
-  BOUNCED
-  COMPLAINED
-  UNSUBSCRIBED
-}
-
-// ============================================
-// WEBHOOK ENDPOINTS (for integrations)
-// ============================================
-
-model WebhookEndpoint {
-  id          String  @id @default(uuid())
-  userId      String  @map("user_id")
-  name        String
-  url         String
-  secret      String? // For signature verification
-  events      String[] // ['form.submitted', 'call.ended', 'appointment.booked']
-  isActive    Boolean @default(true) @map("is_active")
-  description String?
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  webhookLogs WebhookLog[]
-
   @@index([userId])
-  @@map("webhook_endpoints")
-}
-
-model WebhookLog {
-  id         String     @id @default(uuid())
-  endpointId String     @map("endpoint_id")
-  event      String
-  payload    Json
-  status     LogStatus
-  statusCode Int?       @map("status_code")
-  errorMessage String?  @map("error_message")
-  attemptCount Int      @default(1) @map("attempt_count")
-
-  sentAt DateTime @default(now()) @map("sent_at")
-
-  // Relations
-  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
-
-  @@index([endpointId])
-  @@index([sentAt])
-  @@map("webhook_logs")
-}
-
-// ============================================
-// API KEYS (for external integrations)
-// ============================================
-
-model ApiKey {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  name        String
-  keyHash     String   @unique @map("key_hash") // Hashed API key
-  keyPrefix   String   @map("key_prefix") // First 8 chars for display
-  permissions String[] @default(["read"]) // ['read', 'write', 'admin']
-  lastUsedAt  DateTime? @map("last_used_at")
-  expiresAt   DateTime? @map("expires_at")
-  isActive    Boolean  @default(true) @map("is_active")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@index([userId])
-  @@map("api_keys")
+  @@map("submission_notes")
 }

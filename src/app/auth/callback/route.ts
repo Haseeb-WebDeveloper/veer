@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/'
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
 
   if (code) {
     const supabase = await createClient()
@@ -20,6 +20,7 @@ export async function GET(request: Request) {
         // Continue even if sync fails
       }
 
+      // Redirect to dashboard (or the specified next URL) after successful verification
       return NextResponse.redirect(new URL(next, request.url))
     }
   }

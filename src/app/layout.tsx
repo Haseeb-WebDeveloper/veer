@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import SmoothScrollProvider from "@/components/smooth-scroll-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Veer",
@@ -22,14 +22,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SmoothScrollProvider
-            options={{
-              duration: 1.2, // Premium smoothness - higher = smoother
-              touchMultiplier: 2,
-            }}
-          >
-            {children}
-          </SmoothScrollProvider>
+          {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

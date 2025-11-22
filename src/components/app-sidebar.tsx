@@ -1,86 +1,80 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { NAV_ITEMS } from "@/constants/navigation";
 import {
-  LayoutDashboard,
-  Phone,
-  Calendar,
-  FileText,
-  Settings2,
-} from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar"
-
-const navItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-    isActive: false,
-  },
-  {
-    title: "Calls",
-    url: "/dashboard/calls",
-    icon: Phone,
-    isActive: false,
-  },
-  {
-    title: "Appointments",
-    url: "/dashboard/appointments",
-    icon: Calendar,
-    isActive: false,
-  },
-  {
-    title: "Forms",
-    url: "/dashboard/forms",
-    icon: FileText,
-    isActive: false,
-  },
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings2,
-    isActive: false,
-  },
-]
+} from "@/components/ui/sidebar";
 
 function SidebarLogo() {
-  const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  if (isCollapsed) {
+    // When collapsed, show trigger styled like a menu item to match other icons
+    const trigger = (
+      <SidebarTrigger className="w-full justify-center size-8! p-2! rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-[width,height,padding] focus-visible:ring-2 ring-sidebar-ring" />
+    );
+
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          {isMobile ? (
+            trigger
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+              <TooltipContent side="right" align="center">
+                Toggle Sidebar
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5">
+    <div className="flex items-center justify-between gap-2 px-2 py-1.5">
       <Link href="/dashboard" className="flex items-center gap-2">
-        {!isCollapsed && (
-          <span className="font-semibold font-family-brimful tracking-widest">Veer</span>
-        )}
+        <span className="font-semibold font-family-brimful tracking-widest">
+          Veer
+        </span>
       </Link>
+      <SidebarTrigger />
     </div>
-  )
+  );
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname()
-  
+  const pathname = usePathname();
+
   // Update active state based on current path
-  const navMain = navItems.map((item) => ({
+  const navMain = NAV_ITEMS.map((item) => ({
     ...item,
     isActive: pathname === item.url || pathname?.startsWith(item.url + "/"),
-  }))
+  }));
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" className="bg-linear-to-b from-sidebar via-sidebar to-primary/10" {...props}>
       <SidebarHeader>
         <SidebarLogo />
       </SidebarHeader>
@@ -92,5 +86,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

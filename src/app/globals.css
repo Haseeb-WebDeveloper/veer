@@ -197,83 +197,76 @@
 
 :root {
   --radius: 0.625rem;
-  /* Brand Colors */
-  --brand-primary: #0d3b66; /* Dark blue */
-  --brand-accent: #9381ff; /* Purple */
-  --brand-light: #f3fcf0; /* Light cream */
-  --brand-dark: #03000a; /* Very dark blue/black */
 
   /* Light mode colors */
-  --background: oklch(0.98 0.01 140); /* #F3FCF0 - brand light */
-  --foreground: oklch(0.05 0.02 260); /* #03000A - brand dark */
-  --card: oklch(1 0 0); /* White */
-  --card-foreground: oklch(0.05 0.02 260); /* #03000A */
-  --popover: oklch(1 0 0); /* White */
-  --popover-foreground: oklch(0.05 0.02 260); /* #03000A */
-  --primary: oklch(0.35 0.08 240); /* #0D3B66 - brand primary */
-  --primary-foreground: oklch(0.98 0.01 140); /* #F3FCF0 - brand light */
-  --secondary: oklch(0.92 0.01 140); /* Slightly darker than background */
-  --secondary-foreground: oklch(0.35 0.08 240); /* #0D3B66 */
-  --muted: oklch(0.92 0.01 140);
-  --muted-foreground: oklch(0.45 0.02 260);
-  --accent: oklch(0.65 0.15 280); /* #9381FF - brand accent */
-  --accent-foreground: oklch(0.98 0.01 140); /* #F3FCF0 */
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.98 0.01 140);
-  --border: oklch(0.88 0.01 140);
-  --input: oklch(0.92 0.01 140);
-  --ring: oklch(0.35 0.08 240); /* Primary color for focus rings */
-  --chart-1: oklch(0.35 0.08 240); /* Primary */
-  --chart-2: oklch(0.65 0.15 280); /* Accent */
-  --chart-3: oklch(0.45 0.06 200);
-  --chart-4: oklch(0.55 0.12 160);
-  --chart-5: oklch(0.5 0.1 120);
-  --sidebar: oklch(0.98 0.01 140);
-  --sidebar-foreground: oklch(0.05 0.02 260);
-  --sidebar-primary: oklch(0.35 0.08 240);
-  --sidebar-primary-foreground: oklch(0.98 0.01 140);
-  --sidebar-accent: oklch(0.65 0.15 280);
-  --sidebar-accent-foreground: oklch(0.98 0.01 140);
-  --sidebar-border: oklch(0.88 0.01 140);
-  --sidebar-ring: oklch(0.35 0.08 240);
+  --background: #f3fcf0; /* Light cream */
+  --foreground: #03000A; /* Brand dark */
+  --card: #ffffff; /* White */
+  --card-foreground: #03000A;
+  --popover: #ffffff; /* White */
+  --popover-foreground: #03000A;
+  --primary: #0d3b66; /* Brand primary - dark blue */
+  --primary-foreground: #f3fcf0; /* Brand light */
+  --secondary: #e8f5e3; /* Slightly darker than background */
+  --secondary-foreground: #0d3b66;
+  --muted: #e8f5e3;
+  --muted-foreground: #5a5e73;
+  --accent: #9381ff; /* Brand accent - purple */
+  --accent-foreground: #f3fcf0;
+  --destructive: #ef4444;
+  --destructive-foreground: #f3fcf0;
+  --border: #d4e8cf;
+  --input: #03000A;
+  --ring: #0d3b66; /* Primary color for focus rings */
+  --chart-1: #0d3b66; /* Primary */
+  --chart-2: #9381ff; /* Accent */
+  --chart-3: #4d6b8a;
+  --chart-4: #6ba57d;
+  --chart-5: #5a8c5a;
+  --sidebar: #f3fcf0;
+  --sidebar-foreground: #03000A;
+  --sidebar-primary: #0d3b66;
+  --sidebar-primary-foreground: #f3fcf0;
+  --sidebar-accent: #9381ff;
+  --sidebar-accent-foreground: #f3fcf0;
+  --sidebar-border: #d4e8cf;
+  --sidebar-ring: #0d3b66;
 }
 
 .dark {
   /* Dark mode colors */
-  --background: oklch(0.05 0.02 260); /* #03000A - brand dark */
-  --foreground: oklch(0.98 0.01 140); /* #F3FCF0 - brand light */
-  --card: oklch(0.08 0.02 260); /* Slightly lighter than background */
-  --card-foreground: oklch(0.98 0.01 140);
-  --popover: oklch(0.08 0.02 260);
-  --popover-foreground: oklch(0.98 0.01 140);
-  --primary: oklch(
-    0.65 0.15 280
-  ); /* #9381FF - brand accent (lighter for dark mode) */
-  --primary-foreground: oklch(0.05 0.02 260); /* #03000A */
-  --secondary: oklch(0.12 0.02 260);
-  --secondary-foreground: oklch(0.98 0.01 140);
-  --muted: oklch(0.12 0.02 260);
-  --muted-foreground: oklch(0.65 0.02 280);
-  --accent: oklch(0.65 0.15 280); /* #9381FF - brand accent */
-  --accent-foreground: oklch(0.05 0.02 260);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.98 0.01 140);
-  --border: oklch(0.15 0.02 260);
-  --input: oklch(0.12 0.02 260);
-  --ring: oklch(0.65 0.15 280); /* Accent color for focus rings */
-  --chart-1: oklch(0.65 0.15 280); /* Accent */
-  --chart-2: oklch(0.35 0.08 240); /* Primary */
-  --chart-3: oklch(0.55 0.12 200);
-  --chart-4: oklch(0.6 0.1 160);
-  --chart-5: oklch(0.5 0.08 120);
-  --sidebar: oklch(0.08 0.02 260);
-  --sidebar-foreground: oklch(0.98 0.01 140);
-  --sidebar-primary: oklch(0.65 0.15 280);
-  --sidebar-primary-foreground: oklch(0.05 0.02 260);
-  --sidebar-accent: oklch(0.12 0.02 260);
-  --sidebar-accent-foreground: oklch(0.98 0.01 140);
-  --sidebar-border: oklch(0.15 0.02 260);
-  --sidebar-ring: oklch(0.65 0.15 280);
+  --background: #03000A; /* Brand dark */
+  --foreground: #f3fcf0; /* Brand light */
+  --card: #0f0d1a; /* Slightly lighter than background */
+  --card-foreground: #f3fcf0;
+  --popover: #0f0d1a;
+  --popover-foreground: #f3fcf0;
+  --primary: #9381ff; /* Brand accent - lighter for dark mode */
+  --primary-foreground: #03000A;
+  --secondary: #1a1625;
+  --secondary-foreground: #f3fcf0;
+  --muted: #1a1625;
+  --muted-foreground: #a89dca;
+  --accent: #9381ff; /* Brand accent */
+  --accent-foreground: #03000A;
+  --destructive: #f87171;
+  --destructive-foreground: #f3fcf0;
+  --border: #1f1c2e;
+  --input: #1a1625;
+  --ring: #9381ff; /* Accent color for focus rings */
+  --chart-1: #9381ff; /* Accent */
+  --chart-2: #0d3b66; /* Primary */
+  --chart-3: #6b8db3;
+  --chart-4: #7aa88a;
+  --chart-5: #5e8c68;
+  --sidebar: #0f0d1a;
+  --sidebar-foreground: #f3fcf0;
+  --sidebar-primary: #9381ff;
+  --sidebar-primary-foreground: #03000A;
+  --sidebar-accent: #1a1625;
+  --sidebar-accent-foreground: #f3fcf0;
+  --sidebar-border: #1f1c2e;
+  --sidebar-ring: #9381ff;
 }
 
 @layer base {

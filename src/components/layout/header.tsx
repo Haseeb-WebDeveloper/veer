@@ -39,7 +39,9 @@ import {
   CreditCard,
   BarChart3,
   HelpCircle,
+  LayoutDashboard,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 // Type definitions
 interface SubMenuItem {
@@ -169,6 +171,7 @@ export default function Header({ isLight }: { isLight?: boolean }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Handle scroll effect
   useEffect(() => {
@@ -196,6 +199,25 @@ export default function Header({ isLight }: { isLight?: boolean }) {
       document.body.style.overflow = "auto";
     };
   }, [mobileMenuOpen]);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Get initial user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleMouseEnter = (name: string) => {
     setActiveDropdown(name);
@@ -394,12 +416,22 @@ export default function Header({ isLight }: { isLight?: boolean }) {
 
             {/* CTA Button */}
             <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-              <Link
-                href="/contact"
-                className={`border py-[8px] px-[18px] text-[16px] lg:text-[16px] text-background transition-colors duration-200 rounded-[14px] font-medium bg-primary hover:bg-primary/90`}
-              >
-                Get in Touch
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className={`border py-[8px] px-[18px] text-[16px] lg:text-[16px] text-background transition-colors duration-200 rounded-[14px] font-medium bg-primary hover:bg-primary/90 flex items-center gap-2`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/contact"
+                  className={`border py-[8px] px-[18px] text-[16px] lg:text-[16px] text-background transition-colors duration-200 rounded-[14px] font-medium bg-primary hover:bg-primary/90`}
+                >
+                  Get in Touch
+                </Link>
+              )}
             </div>
           </div>
         </nav>
@@ -533,13 +565,24 @@ export default function Header({ isLight }: { isLight?: boolean }) {
 
             {/* Mobile CTA */}
             <div className="mt-6 py-6">
-              <Link
-                href="/contact"
-                className="block w-full text-center text-base font-medium shadow-sm rounded-[14px] text-background bg-primary py-[16px] px-[16px] text-[14px] lora-medium  hover:bg-primary/90 transition-colors duration-200"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Get in Touch
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="block w-full text-center text-base font-medium shadow-sm rounded-[14px] text-background bg-primary py-[16px] px-[16px] text-[14px] lora-medium  hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/contact"
+                  className="block w-full text-center text-base font-medium shadow-sm rounded-[14px] text-background bg-primary py-[16px] px-[16px] text-[14px] lora-medium  hover:bg-primary/90 transition-colors duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Get in Touch
+                </Link>
+              )}
             </div>
           </div>
         </div>

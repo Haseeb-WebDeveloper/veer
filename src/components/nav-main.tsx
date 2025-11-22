@@ -1,7 +1,7 @@
 "use client"
 
-import { type LucideIcon } from "lucide-react"
 import Link from "next/link"
+import type { NavigationItem } from "@/types/navigation"
 
 import {
   Collapsible,
@@ -22,20 +22,11 @@ import {
 export function NavMain({
   items,
 }: {
-  items: {
-    title: string
-    url: string
-    icon?: LucideIcon
-    isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
-  }[]
+  items: NavigationItem[]
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+      {/* <SidebarGroupLabel>Navigation</SidebarGroupLabel> */}
       <SidebarMenu>
         {items.map((item) => {
           // If item has sub-items, render as collapsible
@@ -75,7 +66,7 @@ export function NavMain({
           // Simple link item without sub-items
           return (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild tooltip={item.title} isActive={item.isActive}>
+              <SidebarMenuButton asChild tooltip={item.title} isActive={item.isActive} size="md">
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
