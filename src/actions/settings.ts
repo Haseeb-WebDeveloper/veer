@@ -2,8 +2,9 @@
 
 import { db } from '@/lib/db'
 import { getUser } from '@/lib/auth/get-user'
-import { revalidatePath } from 'next/cache'
+import { updateTag } from 'next/cache'
 import { z } from 'zod'
+import { invalidateUserCacheTag } from '@/lib/cache/config'
 
 // Validation schemas
 const updateProfileSchema = z.object({
@@ -104,7 +105,9 @@ export async function updateProfile(
       })
     }
 
-    revalidatePath('/dashboard/settings')
+    // Invalidate user settings cache
+    updateTag(invalidateUserCacheTag(user.id, 'settings'))
+    
     return { success: true }
   } catch (error) {
     console.error('Error updating profile:', error)
@@ -158,7 +161,9 @@ export async function updateSubscription(
       })
     }
 
-    revalidatePath('/dashboard/settings')
+    // Invalidate user settings cache
+    updateTag(invalidateUserCacheTag(user.id, 'settings'))
+    
     return { success: true }
   } catch (error) {
     console.error('Error updating subscription:', error)

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { getUser } from '@/lib/auth/get-user'
+import { configureUserDataCache } from '@/lib/cache/config'
 import type { 
   EmailProvider, 
   EmailIntegrationProvider, 
@@ -10,9 +11,15 @@ import {
   IntegrationStatus as IntegrationStatusConst 
 } from '@/types/intigrations'
 
+/**
+ * Get email integrations for the current user
+ * Uses private cache - per-user data (requires Suspense wrapper)
+ */
 export async function getEmailIntegrations(): Promise<
   EmailIntegrationData | { error: string }
 > {
+  'use cache: private'
+  
   const supabaseUser = await getUser()
   
   if (!supabaseUser) {
@@ -34,6 +41,9 @@ export async function getEmailIntegrations(): Promise<
     if (!user) {
       return { error: 'User not found' }
     }
+    
+    // Configure cache after we have userId
+    configureUserDataCache(user.id, 'integrations')
 
     const emailIntegrations = user.integrations
 

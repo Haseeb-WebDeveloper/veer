@@ -13,6 +13,12 @@ export default function Home() {
       <main>
         <Header />
         <HeroSection />
+        <iframe
+          src="http://localhost:3000/form/form_07323d9653e84bef"
+          width="100%"
+          height="600"
+          frameBorder="0"
+        ></iframe>
       </main>
     </SmoothScrollProvider>
   );

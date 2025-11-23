@@ -336,6 +336,12 @@ model Form {
   isActive       Boolean @default(true) @map("is_active")
   redirectUrl    String? @map("redirect_url")
   successMessage String  @default("Thank you! We will be in touch soon.") @map("success_message")
+  
+  // Form builder settings (step 3)
+  formSettings   Json?   @default("{}") @map("form_settings") // { redirectBehavior, successMessage, etc. }
+  
+  // Automation configuration (step 4)
+  automationConfig Json? @default("{}") @map("automation_config") // Store automation setup from builder
 
   // File upload settings
   allowFileUploads Boolean @default(false) @map("allow_file_uploads")

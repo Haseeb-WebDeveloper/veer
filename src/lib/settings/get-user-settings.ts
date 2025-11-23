@@ -1,8 +1,15 @@
 import { db } from '@/lib/db'
 import { getUser } from '@/lib/auth/get-user'
+import { configureSettingsCache } from '@/lib/cache/config'
 
-// This is NOT a server action - it's a regular async function for Server Components
+/**
+ * Get user settings
+ * Uses private cache - per-user data (requires Suspense wrapper)
+ * This is NOT a server action - it's a regular async function for Server Components
+ */
 export async function getUserSettings() {
+  'use cache: private'
+  
   const supabaseUser = await getUser()
   
   if (!supabaseUser) {
@@ -23,6 +30,9 @@ export async function getUserSettings() {
     if (!user) {
       return { error: 'User not found' }
     }
+    
+    // Configure cache after we have userId
+    configureSettingsCache(user.id)
 
     return {
       user: {
