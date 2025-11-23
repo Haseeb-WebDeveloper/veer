@@ -1,22 +1,7 @@
 import { db } from '@/lib/db'
 import { getUser } from '@/lib/auth/get-user'
 import { configureUserDataCache } from '@/lib/cache/config'
-
-export type FormData = {
-  id: string
-  name: string
-  title: string | null
-  description: string | null
-  isActive: boolean
-  embedCode: string | null
-  submissionsCount: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-export type UserFormsData = {
-  forms: FormData[]
-}
+import type { FormListItem, UserFormsData } from '@/types/form'
 
 /**
  * Get all forms for the current user
@@ -72,7 +57,7 @@ export async function getUserForms(): Promise<
     })
 
     // Transform to match FormData type
-    const formsData: FormData[] = forms.map((form) => ({
+    const formsData: FormListItem[] = forms.map((form) => ({
       id: form.id,
       name: form.name,
       title: form.title,

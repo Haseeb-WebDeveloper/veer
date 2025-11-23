@@ -46,7 +46,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import type { FormData } from "@/lib/forms/get-user-forms";
+import type { FormListItem } from "@/types/form";
 import { deleteForms, toggleFormStatus } from "@/actions/forms";
 import {
   AlertDialog,
@@ -101,7 +101,7 @@ import {
 } from "@/components/ui/table";
 
 // Custom filter function for multi-column searching
-const multiColumnFilterFn: FilterFn<FormData> = (
+const multiColumnFilterFn: FilterFn<FormListItem> = (
   row,
   columnId,
   filterValue
@@ -113,7 +113,7 @@ const multiColumnFilterFn: FilterFn<FormData> = (
   return searchableRowContent.includes(searchTerm);
 };
 
-const statusFilterFn: FilterFn<FormData> = (
+const statusFilterFn: FilterFn<FormListItem> = (
   row,
   columnId,
   filterValue: string[]
@@ -125,14 +125,14 @@ const statusFilterFn: FilterFn<FormData> = (
 };
 
 interface FormsTableProps {
-  data: FormData[];
+  data: FormListItem[];
 }
 
 export function FormsTable({ data: initialData }: FormsTableProps) {
   const id = useId();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [data, setData] = useState<FormData[]>(initialData);
+  const [data, setData] = useState<FormListItem[]>(initialData);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [pagination, setPagination] = useState<PaginationState>({
@@ -193,7 +193,7 @@ export function FormsTable({ data: initialData }: FormsTableProps) {
     });
   };
 
-  const columns: ColumnDef<FormData>[] = useMemo(
+  const columns: ColumnDef<FormListItem>[] = useMemo(
     () => [
       {
         id: "select",
@@ -769,7 +769,7 @@ function RowActions({
   onToggleStatus,
   isPending,
 }: {
-  row: Row<FormData>;
+  row: Row<FormListItem>;
   onCopyEmbedCode: (embedCode: string) => void;
   onToggleStatus: (formId: string, currentStatus: boolean) => void;
   isPending: boolean;

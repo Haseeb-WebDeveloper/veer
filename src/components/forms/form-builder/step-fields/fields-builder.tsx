@@ -4,7 +4,7 @@ import { useState } from "react"
 import { FieldsSidebar } from "./fields-sidebar"
 import { FormPreview } from "./form-preview"
 import { FieldSettingsPanel } from "./field-settings-panel"
-import type { FormField } from "@/hooks/use-form-builder"
+import type { FormField } from "@/types/form"
 
 interface FieldsBuilderProps {
   fields: FormField[]

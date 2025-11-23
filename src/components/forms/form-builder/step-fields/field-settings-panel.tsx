@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import type { FormField, FieldType } from "@/hooks/use-form-builder"
+import type { FormField, FieldType } from "@/types/form"
 
 interface FieldSettingsPanelProps {
   field: FormField | null

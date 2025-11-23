@@ -1,40 +1,6 @@
 import { db } from '@/lib/db'
 import { configurePublicFormCache } from '@/lib/cache/config'
-
-export type FormField = {
-  id: string
-  type: string
-  name: string
-  label: string
-  placeholder?: string
-  required: boolean
-  order: number
-  validation?: any
-  options?: string[] | { label: string; value: string }[]
-  defaultValue?: any
-  helpText?: string
-  conditional?: any
-}
-
-export type FormData = {
-  id: string
-  name: string
-  title: string | null
-  description: string | null
-  fields: FormField[]
-  theme: {
-    primaryColor?: string
-    submitText?: string
-  }
-  formSettings: {
-    redirectBehavior?: 'redirect' | 'message'
-    redirectUrl?: string
-    successMessage?: string
-  } | null
-  redirectUrl: string | null
-  successMessage: string
-  isActive: boolean
-}
+import type { FormData, FormField } from '@/types/form'
 
 /**
  * Get form by embed code (public access, no auth required)

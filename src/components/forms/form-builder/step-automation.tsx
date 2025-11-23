@@ -1,6 +1,6 @@
 "use client"
 
-import { FormBuilderState } from "@/hooks/use-form-builder"
+import type { FormBuilderState } from "@/types/form"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"

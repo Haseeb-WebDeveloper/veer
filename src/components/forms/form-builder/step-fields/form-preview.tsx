@@ -6,7 +6,7 @@ import { EyeIcon, CodeIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { FieldItem } from "./field-item"
-import type { FormField } from "@/hooks/use-form-builder"
+import type { FormField } from "@/types/form"
 
 interface FormPreviewProps {
   fields: FormField[]

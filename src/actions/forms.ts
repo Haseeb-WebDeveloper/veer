@@ -11,6 +11,7 @@ import {
   invalidateUserCacheTag,
   CACHE_TAGS 
 } from '@/lib/cache/config'
+import type { FormWithEmbedCode } from '@/types/form'
 
 /**
  * Create a new form
@@ -111,7 +112,7 @@ export async function deleteForms(formIds: string[]) {
     // Invalidate caches
     updateTag(invalidateFormsCache())
     updateTag(invalidateUserCacheTag(user.id, 'forms'))
-    formsToDelete.forEach(form => {
+    formsToDelete.forEach((form: FormWithEmbedCode): void => {
       updateTag(invalidateFormCache(form.id))
       if (form.embedCode) {
         updateTag(invalidateFormEmbedCache(form.embedCode))

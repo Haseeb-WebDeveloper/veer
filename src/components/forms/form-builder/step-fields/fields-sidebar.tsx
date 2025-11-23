@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import type { FieldType } from "@/hooks/use-form-builder"
+import type { FieldType } from "@/types/form"
 
 interface FieldTypeOption {
   type: FieldType
